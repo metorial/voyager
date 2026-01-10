@@ -17,7 +17,12 @@ export class PgBackend extends Backend {
       let inner = {
         tenantOids: r.isTenantSpecific ? r.tenantOids : null,
         fields: r.fields,
-        body: typeof r.body == 'string' ? r.body : Object.values(r.body as any).join(', ')
+        body:
+          typeof r.body == 'string'
+            ? r.body
+            : Object.values(r.body as any)
+                .filter(Boolean)
+                .join(', ')
       };
 
       await db
