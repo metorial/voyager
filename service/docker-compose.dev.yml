@@ -30,7 +30,7 @@ services:
     container_name: voyager-service
     restart: unless-stopped
     ports:
-      - "52050:52050"
+      - "52060:52060"
     environment:
       DATABASE_URL: postgresql://voyager:voyager@postgres:5432/voyager
       SEARCH_DATABASE_URL: postgresql://voyager:voyager@postgres:5432/voyager-search

@@ -53,7 +53,7 @@ services:
   voyager:
     image: ghcr.io/metorial/voyager:latest
     ports:
-      - "52050:52050"
+      - "52060:52060"
     environment:
       DATABASE_URL: postgresql://voyager:voyager@postgres:5432/voyager
       SEARCH_DATABASE_URL: postgresql://voyager:voyager@postgres-search:5432/voyager-search
@@ -80,7 +80,7 @@ Start the services:
 docker-compose up -d
 ```
 
-The Voyager service will be available at `http://localhost:52050`
+The Voyager service will be available at `http://localhost:52060`
 
 ## TypeScript Client
 
@@ -98,7 +98,7 @@ bun add @metorial-services/voyager-client
 import { createVoyagerClient } from '@metorial-services/voyager-client';
 
 let client = createVoyagerClient({
-  endpoint: 'http://localhost:52050',
+  endpoint: 'http://localhost:52060',
 });
 ```
 
