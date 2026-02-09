@@ -6,6 +6,17 @@ if (!process.env.SEARCH_DATABASE_URL) {
   process.env.SEARCH_DATABASE_URL = `postgres://${process.env.SEARCH_DATABASE_URL_USERNAME}:${process.env.SEARCH_DATABASE_URL_PASSWORD}@${process.env.SEARCH_DATABASE_URL_HOST}:${process.env.SEARCH_DATABASE_URL_PORT}/${process.env.SEARCH_DATABASE_URL_NAME}`;
 }
 
+console.log({
+  DATABASE_URL: process.env.DATABASE_URL,
+  SEARCH_DATABASE_URL: process.env.SEARCH_DATABASE_URL,
+
+  SEARCH_DATABASE_URL_USERNAME: process.env.SEARCH_DATABASE_URL_USERNAME,
+  SEARCH_DATABASE_URL_PASSWORD: process.env.SEARCH_DATABASE_URL_PASSWORD,
+  SEARCH_DATABASE_URL_HOST: process.env.SEARCH_DATABASE_URL_HOST,
+  SEARCH_DATABASE_URL_PORT: process.env.SEARCH_DATABASE_URL_PORT,
+  SEARCH_DATABASE_URL_NAME: process.env.SEARCH_DATABASE_URL_NAME
+});
+
 if (!process.env.REDIS_URL) {
   process.env.REDIS_URL = `${process.env.REDIS_TLS == 'true' ? 'rediss' : 'redis'}://:${process.env.REDIS_AUTH_TOKEN}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}/0`;
 } else {
