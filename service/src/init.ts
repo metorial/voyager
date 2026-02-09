@@ -3,7 +3,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 if (!process.env.SEARCH_DATABASE_URL) {
-  process.env.SEARCH_DATABASE_URL = `postgres://${process.env.SEARCH_DATABASE_URL_USERNAME}:${process.env.SEARCH_DATABASE_URL_PASSWORD}@${process.env.SEARCH_DATABASE_URL_HOST}:${process.env.SEARCH_DATABASE_URL_PORT}/${process.env.SEARCH_DATABASE_URL_NAME}`;
+  process.env.SEARCH_DATABASE_URL = `postgres://${process.env.SEARCH_DATABASE_USERNAME}:${process.env.SEARCH_DATABASE_PASSWORD}@${process.env.SEARCH_DATABASE_HOST}:${process.env.SEARCH_DATABASE_PORT}/${process.env.SEARCH_DATABASE_NAME}`;
 }
 
 console.log({
