@@ -4,15 +4,15 @@ import { env } from '../../env';
 import { Backend, type SearchParams } from '../_backend';
 
 export class AlgoliaBackend extends Backend {
-  private client: Algoliasearch;
+  private client?: Algoliasearch;
   private prefix: string;
 
   constructor() {
     super();
-    this.client = algoliasearch(
-      env.service.ALGOLIA_APP_ID ?? '',
-      env.service.ALGOLIA_API_KEY ?? ''
-    );
+    this.client =
+      env.service.ALGOLIA_APP_ID && env.service.ALGOLIA_API_KEY
+        ? algoliasearch(env.service.ALGOLIA_APP_ID, env.service.ALGOLIA_API_KEY)
+        : undefined;
     this.prefix = env.service.ALGOLIA_INDEX_PREFIX ?? '';
   }
 
@@ -39,7 +39,7 @@ export class AlgoliaBackend extends Backend {
       tenantOids: r.isTenantSpecific ? r.tenantOids.map(String) : null
     }));
 
-    await this.client.saveObjects({
+    await this.client!.saveObjects({
       indexName: this.indexName(index),
       objects
     });
@@ -48,7 +48,7 @@ export class AlgoliaBackend extends Backend {
   async deleteRecordsById(index: Index, recordIds: string[]) {
     if (recordIds.length === 0) return;
 
-    await this.client.deleteObjects({
+    await this.client!.deleteObjects({
       indexName: this.indexName(index),
       objectIDs: recordIds
     });
@@ -69,7 +69,7 @@ export class AlgoliaBackend extends Backend {
 
     let filterString = facetFilters.join(' AND ');
 
-    let result = await this.client.searchSingleIndex({
+    let result = await this.client!.searchSingleIndex({
       indexName: this.indexName(index),
       searchParams: {
         query: query || '',
