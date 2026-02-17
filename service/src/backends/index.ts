@@ -1,3 +1,5 @@
+import { AlgoliaBackend } from './algolia';
 import { PgBackend } from './pg';
 
-export let defaultBackend = new PgBackend();
+let algolia = new AlgoliaBackend();
+export let defaultBackend = algolia.isEnabled() ? algolia : new PgBackend();
