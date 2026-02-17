@@ -9,7 +9,10 @@ export class AlgoliaBackend extends Backend {
 
   constructor() {
     super();
-    this.client = algoliasearch(env.service.ALGOLIA_APP_ID ?? '', env.service.ALGOLIA_API_KEY ?? '');
+    this.client = algoliasearch(
+      env.service.ALGOLIA_APP_ID ?? '',
+      env.service.ALGOLIA_API_KEY ?? ''
+    );
     this.prefix = env.service.ALGOLIA_INDEX_PREFIX ?? '';
   }
 
@@ -18,13 +21,13 @@ export class AlgoliaBackend extends Backend {
   }
 
   private indexName(index: Index): string {
-    return `${this.prefix}${index.oid}`;
+    return `${this.prefix}${index.identifier}`;
   }
 
   async indexRecords(index: Index, records: DbRecord[]) {
     if (records.length === 0) return;
 
-    let objects = records.map((r) => ({
+    let objects = records.map(r => ({
       objectID: r.documentId,
       fields: r.fields,
       body:
@@ -61,9 +64,7 @@ export class AlgoliaBackend extends Backend {
     }
 
     if (tenantOids?.length) {
-      facetFilters.push(
-        tenantOids.map((oid) => `tenantOids:${String(oid)}`).join(' OR ')
-      );
+      facetFilters.push(tenantOids.map(oid => `tenantOids:${String(oid)}`).join(' OR '));
     }
 
     let filterString = facetFilters.join(' AND ');
@@ -78,7 +79,7 @@ export class AlgoliaBackend extends Backend {
     });
 
     return {
-      records: result.hits.map((h) => ({ documentId: h.objectID }))
+      records: result.hits.map(h => ({ documentId: h.objectID }))
     };
   }
 }
