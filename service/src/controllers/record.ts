@@ -76,7 +76,7 @@ export let recordController = app.controller({
     .handler()
     .input(
       v.object({
-        tenantId: v.string(),
+        tenantId: v.optional(v.string()),
         sourceId: v.string(),
         indexId: v.string(),
 
@@ -85,7 +85,9 @@ export let recordController = app.controller({
       })
     )
     .do(async ctx => {
-      let tenant = await tenantService.getTenantById({ id: ctx.input.tenantId });
+      let tenant = ctx.input.tenantId
+        ? await tenantService.getTenantById({ id: ctx.input.tenantId })
+        : undefined;
 
       let res = await recordService.searchRecords({
         tenant,

@@ -71,14 +71,14 @@ class recordServiceImpl {
 
   async searchRecords(d: {
     index: Index;
-    tenant: Tenant;
+    tenant?: Tenant;
     query: string;
     filters?: { [key: string]: any };
   }) {
     let res = await defaultBackend.searchRecords(d.index, {
       query: d.query,
       filters: d.filters,
-      tenantOids: [d.tenant.oid]
+      tenantOids: d.tenant ? [d.tenant.oid] : undefined
     });
 
     return db.record.findMany({
