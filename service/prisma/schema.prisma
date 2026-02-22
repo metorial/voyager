@@ -22,7 +22,6 @@ model Tenant {
   id  String @unique
 
   identifier String @unique
-  name       String
 
   createdAt DateTime @default(now())
 }
