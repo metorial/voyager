@@ -42,8 +42,7 @@ class recordServiceImpl {
         skipDuplicates: true,
         data: uniqueTenants.map(t => ({
           ...getId('tenant'),
-          identifier: t,
-          name: t
+          identifier: t
         }))
       });
 
