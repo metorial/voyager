@@ -86,7 +86,7 @@ export let recordController = app.controller({
     )
     .do(async ctx => {
       let tenant = ctx.input.tenantId
-        ? await tenantService.getTenantById({ id: ctx.input.tenantId })
+        ? await tenantService.getTenantByIdSafe({ id: ctx.input.tenantId })
         : undefined;
 
       let res = await recordService.searchRecords({

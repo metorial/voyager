@@ -17,14 +17,13 @@ export let tenantController = app.controller({
     .handler()
     .input(
       v.object({
-        name: v.string(),
+        name: v.optional(v.string()), // Ignored, but kept for backwards compatibility
         identifier: v.string()
       })
     )
     .do(async ctx => {
       let tenant = await tenantService.upsertTenant({
         input: {
-          name: ctx.input.name,
           identifier: ctx.input.identifier
         }
       });

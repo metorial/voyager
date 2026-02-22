@@ -22,19 +22,35 @@ class recordServiceImpl {
       metadata?: { [key: string]: any };
     };
   }) {
-    let tenantOids = d.input.tenantIds?.length
-      ? (
-          await db.tenant.findMany({
-            where: {
-              OR: [
-                { id: { in: d.input.tenantIds } },
-                { identifier: { in: d.input.tenantIds } }
-              ]
-            },
-            select: { oid: true }
-          })
-        ).map(t => t.oid)
+    let uniqueTenants = [...new Set(d.input.tenantIds || [])];
+
+    let tenantFilter = uniqueTenants.length
+      ? {
+          where: {
+            OR: [{ id: { in: d.input.tenantIds } }, { identifier: { in: d.input.tenantIds } }]
+          },
+          select: { oid: true }
+        }
+      : undefined;
+
+    let tenantOids = tenantFilter
+      ? (await db.tenant.findMany(tenantFilter)).map(t => t.oid)
       : [];
+
+    if (tenantOids.length !== uniqueTenants.length) {
+      await db.tenant.createMany({
+        skipDuplicates: true,
+        data: uniqueTenants.map(t => ({
+          ...getId('tenant'),
+          identifier: t,
+          name: t
+        }))
+      });
+
+      tenantOids = tenantFilter
+        ? (await db.tenant.findMany(tenantFilter)).map(t => t.oid)
+        : [];
+    }
 
     let hash = await Hash.sha256(canonicalize([d.input.body, d.input.fields]));
 
