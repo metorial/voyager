@@ -2,6 +2,7 @@ import { and, arrayOverlaps, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import type { Record as DbRecord, Index } from '../../../prisma/generated/client';
 import { Backend, type SearchParams } from '../_backend';
 import { db, records } from './schema';
+import { normalizeSearchQuery } from '../../utils/searchQuery';
 
 export class PgBackend extends Backend {
   override isEnabled(): boolean {
@@ -54,9 +55,20 @@ export class PgBackend extends Backend {
 
     let wheres: any[] = [eq(records.indexId, index.oid)];
 
-    // Full-text search
     if (query) {
-      wheres.push(sql`body_search @@ plainto_tsquery('english', ${query})`);
+      let normalizedQuery = normalizeSearchQuery(query);
+
+      if (normalizedQuery) {
+        wheres.push(sql`
+          (
+            body_search @@ plainto_tsquery('english', ${normalizedQuery})
+            OR (
+              char_length(${normalizedQuery}) >= 3
+              AND ${normalizedQuery} <% body
+            )
+          )
+        `);
+      }
     }
 
     // JSON filters

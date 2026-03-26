@@ -64,6 +64,8 @@ if (db && env.service.SEARCH_DATABASE_URL) {
     await defaultPool.end();
   }
 
+  await db.execute(sql`CREATE EXTENSION IF NOT EXISTS pg_trgm;`);
+
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS records (
       id serial PRIMARY KEY,
@@ -78,6 +80,9 @@ if (db && env.service.SEARCH_DATABASE_URL) {
 
   await db.execute(
     sql`CREATE INDEX IF NOT EXISTS idx_body_search ON records USING gin (body_search);`
+  );
+  await db.execute(
+    sql`CREATE INDEX IF NOT EXISTS idx_body_trgm ON records USING gin (body gin_trgm_ops);`
   );
   await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_fields ON records USING gin (fields);`);
   await db.execute(
