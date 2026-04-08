@@ -1,8 +1,19 @@
-import { and, arrayOverlaps, eq, inArray, isNull, or, sql } from 'drizzle-orm';
+import {
+  and,
+  arrayOverlaps,
+  eq,
+  inArray,
+  isNull,
+  or,
+  sql,
+  type SQL
+} from 'drizzle-orm';
 import type { Record as DbRecord, Index } from '../../../prisma/generated/client';
 import { Backend, type SearchParams } from '../_backend';
 import { db, records } from './schema';
 import { normalizeSearchQuery } from '../../utils/searchQuery';
+
+const SUBSPACE_PROVIDER_LISTING_INDEX_IDENTIFIER = 'subspace_provider_listing';
 
 export class PgBackend extends Backend {
   override isEnabled(): boolean {
@@ -50,28 +61,9 @@ export class PgBackend extends Backend {
       .where(and(eq(records.indexId, index.oid), inArray(records.documentId, recordIds)));
   }
 
-  async searchRecords(index: Index, { query, filters, tenantOids }: SearchParams) {
-    if (!db) throw new Error('Database not initialized');
+  private buildBaseWheres(index: Index, filters?: { [key: string]: any }, tenantOids?: bigint[]) {
+    let wheres: SQL[] = [eq(records.indexId, index.oid)];
 
-    let wheres: any[] = [eq(records.indexId, index.oid)];
-
-    if (query) {
-      let normalizedQuery = normalizeSearchQuery(query);
-
-      if (normalizedQuery) {
-        wheres.push(sql`
-          (
-            body_search @@ plainto_tsquery('english', ${normalizedQuery})
-            OR (
-              char_length(${normalizedQuery}) >= 3
-              AND ${normalizedQuery} <% body
-            )
-          )
-        `);
-      }
-    }
-
-    // JSON filters
     if (filters && Object.keys(filters).length > 0) {
       for (let [key, value] of Object.entries(filters)) {
         wheres.push(sql`fields @> ${JSON.stringify({ [key]: value })}::jsonb`);
@@ -79,19 +71,100 @@ export class PgBackend extends Backend {
     }
 
     if (tenantOids?.length) {
-      wheres.push(
-        or(isNull(records.tenantOids), arrayOverlaps(records.tenantOids, tenantOids))
+      let tenantWhere = or(
+        isNull(records.tenantOids),
+        arrayOverlaps(records.tenantOids, tenantOids)
       );
+
+      if (tenantWhere) {
+        wheres.push(tenantWhere);
+      }
     } else {
       wheres.push(isNull(records.tenantOids));
     }
 
-    let result = await db
-      .select()
+    return wheres;
+  }
+
+  private async searchRecordsByTitle(
+    index: Index,
+    normalizedQuery: string,
+    filters?: { [key: string]: any },
+    tenantOids?: bigint[]
+  ) {
+    if (!db) throw new Error('Database not initialized');
+
+    let titleExpression = sql`btrim(split_part(${records.body}, ',', 1))`;
+
+    return await db
+      .select({ documentId: records.documentId })
+      .from(records)
+      .where(
+        and(
+          ...this.buildBaseWheres(index, filters, tenantOids),
+          sql`${titleExpression} ILIKE '%' || ${normalizedQuery} || '%'`
+        )
+      )
+      .orderBy(
+        sql`position(lower(${normalizedQuery}) in lower(${titleExpression}))`,
+        sql`char_length(${titleExpression})`,
+        records.documentId
+      )
+      .limit(100);
+  }
+
+  private async searchRecordsByBody(
+    index: Index,
+    normalizedQuery: string,
+    filters?: { [key: string]: any },
+    tenantOids?: bigint[]
+  ) {
+    if (!db) throw new Error('Database not initialized');
+
+    let wheres = this.buildBaseWheres(index, filters, tenantOids);
+
+    if (normalizedQuery) {
+      wheres.push(sql`
+        (
+          body_search @@ plainto_tsquery('english', ${normalizedQuery})
+          OR (
+            char_length(${normalizedQuery}) >= 3
+            AND ${normalizedQuery} <% body
+          )
+        )
+      `);
+    }
+
+    return await db
+      .select({ documentId: records.documentId })
       .from(records)
       .where(and(...wheres))
       .limit(100);
+  }
 
-    return { records: result };
+  async searchRecords(index: Index, { query, filters, tenantOids }: SearchParams) {
+    if (!db) throw new Error('Database not initialized');
+
+    let normalizedQuery = query ? normalizeSearchQuery(query) : '';
+
+    if (
+      normalizedQuery &&
+      index.identifier === SUBSPACE_PROVIDER_LISTING_INDEX_IDENTIFIER
+    ) {
+      let titleMatches = await this.searchRecordsByTitle(
+        index,
+        normalizedQuery,
+        filters,
+        tenantOids
+      );
+
+      if (titleMatches.length > 0) {
+        return { records: titleMatches };
+      }
+    }
+
+    return {
+      records: await this.searchRecordsByBody(index, normalizedQuery, filters, tenantOids)
+    };
   }
 }

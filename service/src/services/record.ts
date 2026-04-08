@@ -96,13 +96,21 @@ class recordServiceImpl {
       tenantOids: d.tenant ? [d.tenant.oid] : undefined
     });
 
-    return db.record.findMany({
+    let records = await db.record.findMany({
       where: {
         indexOid: d.index.oid,
         documentId: { in: res.records.map(r => r.documentId) }
       },
       include
     });
+
+    let recordsByDocumentId = new Map(records.map(record => [record.documentId, record]));
+
+    let orderedRecords = res.records
+      .map(record => recordsByDocumentId.get(record.documentId))
+      .filter(record => record !== undefined);
+
+    return orderedRecords;
   }
 
   async getRecordById(d: { id: string; tenant: Tenant }) {

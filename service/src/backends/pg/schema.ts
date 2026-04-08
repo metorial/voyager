@@ -84,6 +84,10 @@ if (db && env.service.SEARCH_DATABASE_URL) {
   await db.execute(
     sql`CREATE INDEX IF NOT EXISTS idx_body_trgm ON records USING gin (body gin_trgm_ops);`
   );
+  await db.execute(sql`
+    CREATE INDEX IF NOT EXISTS idx_body_title_trgm
+    ON records USING gin ((btrim(split_part(body, ',', 1))) gin_trgm_ops);
+  `);
   await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_fields ON records USING gin (fields);`);
   await db.execute(
     sql`CREATE INDEX IF NOT EXISTS idx_tenant_oids ON records USING gin (tenant_oids);`
